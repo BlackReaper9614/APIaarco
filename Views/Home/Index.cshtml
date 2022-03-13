@@ -1,0 +1,337 @@
+﻿@model ConsumirAPI.Models.Marcas
+
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="container bg-info">
+    <form>
+        <div class="text-white p-2">
+            <h3 class="text-center">Vehículo</h3>
+
+            <div class="form-group row">
+                @Html.LabelFor(model => model.sMarca, "Marca", htmlAttributes: new { @class = "control-label col-md-3 text-center marca", @id="marca" })
+                <div class="col-md-9">
+                    @Html.DropDownList("Marca", null, htmlAttributes: new { @class = "form-control" })
+                    @Html.ValidationMessageFor(model => model.sMarca, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <div class="form-group row">
+                <label for="submarca" class="col-sm-3 col-form-label text-center">Sub-Marca:</label>
+                <div class="col-sm-9">
+                    <select class="form-control" id="submarca" name="submarca">
+                        <option value="1">Selecciona una Submarca</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="modelo" class="col-sm-3 col-form-label text-center">Modelo:</label>
+                <div class="col-sm-9">
+                    <select class="form-control" id="modelo" name="modelo">
+                        <option value="1">Selecciona un Modelo</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="descripcion" class="col-sm-3 col-form-label text-center">Descripción:</label>
+                <div class="col-sm-9">
+                    <select class="form-control" name="descripcion" id="descripcion">
+                        <option value="1">Selecciona una Descripción</option>
+                    </select>
+                </div>
+            </div>
+
+            <hr />
+
+            <h3 class="text-center">Domicilio</h3>
+            <div class="form-group row">
+                <label for="cp" class="col-sm-3 col-form-label text-center">Código Postal:</label>
+                <div class="col-sm-9">
+                    <input class="form-control" id="cp" name="cp" onkeydown="search(this)"/>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="estado" class="col-sm-3 col-form-label text-center">Estado:</label>
+                <div class="col-sm-9">
+                    <input class="form-control" id="estado" name="estado" placeholder="" readonly />
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="municipio" class="col-sm-3 col-form-label text-center">Municipio:</label>
+                <div class="col-sm-9">
+                    <input class="form-control" id="municipio" name="municipio" placeholder="" readonly />
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="colonia" class="col-sm-3 col-form-label text-center">Colonia:</label>
+                <div class="col-sm-9">
+                    <input class="form-control" id="colonia" name="colonia" placeholder="" readonly />
+                </div>
+            </div>
+
+            <h3 class="text-center">Persona</h3>
+            <div class="form-group row">
+                <label for="cp" class="col-sm-3 col-form-label text-center">Fecha de Nacimiento:</label>
+                <div class="col-sm-9">
+                    <input class="form-control" id="fechaNac" type="date"/>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label for="descripcion" class="col-sm-3 col-form-label text-center">Genero:</label>
+                <div class="col-sm-9">
+                    <select class="form-control" name="genero" id="genero">
+                        <option value="1">Selecciona un Genero</option>
+                        <option value="2">Masculino</option>
+                        <option value="3">Femenino</option>
+                    </select>
+                </div>
+            </div>
+            <p class="text-danger" name="validador" id="validador"></p>
+            <div class="form-group row">
+                <p class="col-sm-3"></p>
+                <button type="button" class="btn btn-warning col-sm-4" onclick="validar()">Cotizar</button>
+            </div>
+
+        </div>
+    </form>
+</div>
+
+<script>
+        //-------------------------------------------------------MARCA
+        const selectMarcas = document.querySelector('#Marca');
+
+        selectMarcas.addEventListener('change', (event) => {
+
+            const textMarca = selectMarcas.options[selectMarcas.selectedIndex].text;
+
+            const valueMarca = selectMarcas.value;
+
+            if(textMarca != 'Selecciona una Marca'){
+                //limpiar combos dependientes de marca
+                $("#submarca").find('option').not(':first').remove();
+                $("#modelo").find('option').not(':first').remove();
+                $("#descripcion").find('option').not(':first').remove();
+
+
+                $.ajax({
+                    type:"POST", // la variable type guarda el tipo de la peticion GET,POST,..
+                    url:"https://apitestcotizamatico.azurewebsites.net/api/catalogos", //url guarda la ruta hacia donde se hace la peticion
+                    data:{
+                            "NombreCatalogo": "Submarca",
+                            "Filtro": valueMarca,
+                            "IdAplication": 2
+                    }, // data recive un objeto con la informacion que se enviara al servidor
+                    success:function(submarca){ //success es una funcion que se utiliza si el servidor retorna informacion
+                        
+                        const catalogoSubmarcas = JSON.parse(submarca.CatalogoJsonString) 
+                        
+                        var selectSubmarca = document.querySelector('#submarca');
+
+                        $("#submarca").find('option').not(':first').remove();
+
+                        for(const [key, value] of Object.entries(catalogoSubmarcas)){
+                            var option = document.createElement('option');
+                            option.text = value.sSubMarca;
+                            option.value = value.iIdSubMarca;
+                            selectSubmarca.add(option);
+                        }
+
+
+                    },
+                    dataType: "json" // El tipo de datos esperados del servidor. Valor predeterminado: Intelligent Guess (xml, json, script, text, html).
+                });
+            }
+
+        });
+        //-------------------------------------------------SubMarca
+        const selectSubMarcas = document.querySelector('#submarca');
+
+        selectSubMarcas.addEventListener('change', (event) => {
+                
+            $("#modelo").find('option').not(':first').remove();
+            $("#descripcion").find('option').not(':first').remove();
+
+            const textSubMarca = selectSubMarcas.options[selectSubMarcas.selectedIndex].text;
+
+            const valueSubMarca = selectSubMarcas.value;
+
+            if(textSubMarca != 'Selecciona una Submarca'){
+
+                $.ajax({
+                    type:"POST", // la variable type guarda el tipo de la peticion GET,POST,..
+                    url:"https://apitestcotizamatico.azurewebsites.net/api/catalogos", //url guarda la ruta hacia donde se hace la peticion
+                    data:{
+                            "NombreCatalogo": "Modelo",
+                            "Filtro": valueSubMarca,
+                            "IdAplication": 2
+                    }, // data recive un objeto con la informacion que se enviara al servidor
+                    success:function(modelo){ //success es una funcion que se utiliza si el servidor retorna informacion
+                        
+                        const catalogoModelo= JSON.parse(modelo.CatalogoJsonString) 
+                        
+                        var selectModelo = document.querySelector('#modelo');
+
+                        $("#modelo").find('option').not(':first').remove();
+
+                        for(const [key, value] of Object.entries(catalogoModelo)){
+                            var option = document.createElement('option');
+                            option.text = value.sModelo;
+                            option.value = value.iIdModelo;
+                            selectModelo.add(option);
+                        }
+
+
+                    },
+                    dataType: "json" // El tipo de datos esperados del servidor. Valor predeterminado: Intelligent Guess (xml, json, script, text, html).
+                });
+            }
+
+        });
+
+        //---------------------------------------Modelo
+        const selectModelo = document.querySelector('#modelo');
+
+        selectModelo.addEventListener('change', (event) => {
+            $("#descripcion").find('option').not(':first').remove();
+
+            const textModelo = selectModelo.options[selectModelo.selectedIndex].text;
+
+            const valueModelo = selectModelo.value;
+
+            if(textModelo != 'Selecciona un Modelo'){
+
+                $.ajax({
+                    type:"POST", // la variable type guarda el tipo de la peticion GET,POST,..
+                    url:"https://apitestcotizamatico.azurewebsites.net/api/catalogos", //url guarda la ruta hacia donde se hace la peticion
+                    data:{
+                            "NombreCatalogo": "DescripcionModelo",
+                            "Filtro": valueModelo,
+                            "IdAplication": 2
+                    }, // data recive un objeto con la informacion que se enviara al servidor
+                    success:function(descripcion){ //success es una funcion que se utiliza si el servidor retorna informacion
+                        
+                        const catalogoDescripcion= JSON.parse(descripcion.CatalogoJsonString) 
+                        
+                        var selectDescripcion = document.querySelector('#descripcion');
+
+                        $("#descripcion").find('option').not(':first').remove();
+
+                        for(const [key, value] of Object.entries(catalogoDescripcion)){
+                            var option = document.createElement('option');
+                            option.text = value.sDescripcion;
+                            option.value = value.iIdDescripcionModelo;
+                            selectDescripcion.add(option);
+                        }
+
+
+                    },
+                    dataType: "json" // El tipo de datos esperados del servidor. Valor predeterminado: Intelligent Guess (xml, json, script, text, html).
+                });
+            }
+
+        });
+
+        //---------------------------------------evento de cp---------
+        function search(ele) {
+            
+            //event.preventDefault();
+            
+            if(event.key === 'Enter') {
+                
+                $.ajax({
+                    type:"POST", // la variable type guarda el tipo de la peticion GET,POST,..
+                    url:"https://apitestcotizamatico.azurewebsites.net/api/catalogos", //url guarda la ruta hacia donde se hace la peticion
+                    data:{
+                            "NombreCatalogo": "Sepomex",
+                            "Filtro": ele.value,
+                            "IdAplication": 2
+                    }, // data recive un objeto con la informacion que se enviara al servidor
+                    success:function(cp){ //success es una funcion que se utiliza si el servidor retorna informacion
+                        
+                        const catalogoCP = JSON.parse(cp.CatalogoJsonString); 
+                        
+                        const inputEstado = document.querySelector('#estado');
+                        const inputMunicipio = document.querySelector('#municipio')
+                        const inputColonia = document.querySelector('#colonia')
+
+                        for(const [key, value] of Object.entries(catalogoCP)){
+
+                            inputEstado.value = value.Municipio.Estado.sEstado;    
+                            inputMunicipio.value = value.Municipio.sMunicipio;
+                            inputColonia.value = value.Ubicacion[0].sUbicacion;
+                        }
+
+                    },
+                    dataType: "json" // El tipo de datos esperados del servidor. Valor predeterminado: Intelligent Guess (xml, json, script, text, html).
+                });
+            
+            }
+        }
+
+
+        function validar(){
+            let validador = document.querySelector('#validador');
+
+            const selectMarca = document.querySelector('#Marca');
+            const textoMarca = selectMarca.options[selectMarca.selectedIndex].text;
+            
+            if(textoMarca == 'Seleccione una Marca'){
+                validador.textContent = 'Debe Seleccionar una Marca';            
+            }
+
+            const selectSubmarca = document.querySelector('#submarca');
+            const textSubmarca = selectSubmarca.options[selectSubmarca.selectedIndex].text;
+
+            if(textSubmarca == 'Selecciona una Submarca'){
+                validador.textContent = 'Debe Seleccionar una Submarca';           
+            }
+
+            const selectModelo = document.querySelector('#modelo');
+            const textModelo = selectModelo.options[selectModelo.selectedIndex].text;
+
+            if(textModelo == 'Selecciona un Modelo'){
+                validador.textContent = 'Debe Seleccionar un Modelo';           
+            }
+
+            const selectDescripcion = document.querySelector('#descripcion');
+            const textDescripcion = selectDescripcion.options[selectDescripcion.selectedIndex].text;
+
+            if(textDescripcion == 'Selecciona una Descripción'){
+                validador.textContent = 'Debe Seleccionar una Descripción';           
+            }
+
+            const inputCP = document.querySelector('#cp');
+            const textCP = inputCP.value;
+
+            if(textCP == ''){
+                validador.textContent = 'Debe Seleccionar una Ubicación Válida';           
+            }
+
+            const tiempoTranscurrido = Date.now();
+            const hoy = new Date(tiempoTranscurrido);
+            const hoyLocal = hoy.toLocaleDateString();
+            const annoAct = hoyLocal.substring(hoyLocal.length,(hoyLocal.length-4))
+     
+            const fechaNac = document.querySelector('#fechaNac').value;
+
+            const annoNac = fechaNac.substring(0, 4);
+
+            console.log(annoNac);
+
+            if(annoAct-annoNac < 18 | annoNac == ''){
+                validador.textContent = 'Debe Tener más de 18 Años';           
+            }
+            
+            const selectGenero = document.querySelector('#genero');
+            const textoGenero = selectGenero.options[selectGenero.selectedIndex].text;
+            
+            if(textoGenero == 'Selecciona un Genero'){
+                validador.textContent = 'Debe Seleccionar un Genero';            
+            }
+
+        }
+
+
+</script>
+
